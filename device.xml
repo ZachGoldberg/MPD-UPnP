@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root xmlns="urn:schemas-upnp-org:device-1-0">
+  <specVersion>
+    <major>1</major>
+    <minor>0</minor>
+  </specVersion>
+
+  <device>  
+    <deviceType>urn:schemas-upnp-org:device:MediaRenderer:2</deviceType>
+    <friendlyName>Music Playing Daemon</friendlyName>
+    <manufacturer>MPD</manufacturer>
+    <modelName>Media Daemon</modelName>
+    <UDN>uuid:cc93d8e6-6b8b-4f60-87ca-228c36b5b0c6</UDN>
+    
+    <serviceList>
+      <service>
+        <serviceType>urn:schemas-upnp-org:service:AVTransport:1</serviceType>
+        <serviceId>urn:upnp-org:serviceId:AVTransport</serviceId>
+        <SCPDURL>/AVTransport2.xml</SCPDURL>
+        <controlURL>/Renderer/Control</controlURL>
+        <eventSubURL>/Renderer/Event</eventSubURL>
+      </service>
+    </serviceList>
+  </device>
+</root>
+
