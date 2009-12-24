@@ -31,25 +31,6 @@ def setup_mpd():
 
     MPDCLIENT = mpd.MPDClient()
 
-
-def on_play_action(service, action):
-  print "Play"
-  MPDCLIENT.connect(**CON_ID)
-  MPDCLIENT.play()
-  MPDCLIENT.disconnect()
-
-def on_pause_action(service, action):
-  print "Pause"
-  MPDCLIENT.connect(**CON_ID)
-  MPDCLIENT.pause()
-  MPDCLIENT.disconnect()
-  print action, action.__class__
-  print dir(action)
-#  print dir(service)
-#  import pdb
-#  pdb.set_trace()
-#  getattr(action, "return")()
-  
 rd = setup_server()
 print "UPnP MediaRenderer Service Exported"
 
@@ -57,10 +38,25 @@ setup_mpd()
 print "MPD Client Setup"
 
 
+def mpd_func_generator(function_name, args=None):
+  if not args:
+    args=[]
+
+  def wrapper(service, action):
+     print function_name
+     MPDCLIENT.connect(**CON_ID)
+     getattr(MPDCLIENT, function_name.lower())(*args)
+     MPDCLIENT.disconnect()
+     getattr(action, "return")()
+
+  return wrapper
 
 service = rd.get_service("urn:schemas-upnp-org:service:AVTransport:1")
-service.connect("action-invoked::Play", on_play_action)
-service.connect("action-invoked::Pause", on_pause_action)
+service.connect("action-invoked::Play", mpd_func_generator("Play"))
+service.connect("action-invoked::Pause", mpd_func_generator("Pause"))
+service.connect("action-invoked::Stop", mpd_func_generator("Stop"))
+service.connect("action-invoked::Next", mpd_func_generator("Next"))
+service.connect("action-invoked::Previous", mpd_func_generator("Previous"))
 
 print "Awaiting commands..."
 GObject.MainLoop().run()
