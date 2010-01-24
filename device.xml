@@ -10,7 +10,7 @@
     <friendlyName>Music Playing Daemon</friendlyName>
     <manufacturer>MPD</manufacturer>
     <modelName>Media Daemon</modelName>
-    <UDN>uuid:cc93d8e6-6b8b-4f60-87ca-228c36b5b0c6</UDN>
+    <UDN>uuid:cc43d8e6-6b8b-4f60-87ca-228c36b5b0c6</UDN>
     
     <serviceList>
       <service>

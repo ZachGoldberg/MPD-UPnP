@@ -51,12 +51,18 @@ def mpd_func_generator(function_name, args=None):
 
   return wrapper
 
+def set_mpd_uri(service, action):
+    print action.get_value("CurrentURI")
+    import pdb
+    pdb.set_trace()
+
 service = rd.get_service("urn:schemas-upnp-org:service:AVTransport:1")
 service.connect("action-invoked::Play", mpd_func_generator("Play"))
 service.connect("action-invoked::Pause", mpd_func_generator("Pause"))
 service.connect("action-invoked::Stop", mpd_func_generator("Stop"))
 service.connect("action-invoked::Next", mpd_func_generator("Next"))
 service.connect("action-invoked::Previous", mpd_func_generator("Previous"))
+service.connect("action-invoked::SetAVTransportURI", set_mpd_uri)
 
 print "Awaiting commands..."
 GObject.MainLoop().run()
