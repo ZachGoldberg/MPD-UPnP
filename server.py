@@ -1,4 +1,4 @@
-from gi.repository import GUPnP, GObject, GLib
+from gi.repository import GUPnP, GUPnPAV, GObject, GLib
 import mpd
 
 CON_ID = None
@@ -14,6 +14,7 @@ def setup_server():
 
     ctx.host_path("device.xml", "/device.xml")
     ctx.host_path("AVTransport2.xml", "/AVTransport2.xml")
+    ctx.host_path("ContentDirectory.xml", "/ContentDirectory.xml")
 
     desc = "device.xml"
     desc_loc = "./"
@@ -48,13 +49,15 @@ def mpd_func_generator(function_name, args=None):
      getattr(MPDCLIENT, function_name.lower())(*args)
      MPDCLIENT.disconnect()
      getattr(action, "return")()
+     
 
   return wrapper
 
 def set_mpd_uri(service, action):
-    print action.get_value("CurrentURI")
+    print action.get_value_type("CurrentURI", GObject.TYPE_STRING)
     import pdb
     pdb.set_trace()
+
 
 service = rd.get_service("urn:schemas-upnp-org:service:AVTransport:1")
 service.connect("action-invoked::Play", mpd_func_generator("Play"))
@@ -63,6 +66,19 @@ service.connect("action-invoked::Stop", mpd_func_generator("Stop"))
 service.connect("action-invoked::Next", mpd_func_generator("Next"))
 service.connect("action-invoked::Previous", mpd_func_generator("Previous"))
 service.connect("action-invoked::SetAVTransportURI", set_mpd_uri)
+
+
+def browse_action(service, action):
+    import pdb
+    pdb.set_trace()
+    getattr(action, "return")()
+
+
+
+
+
+directory = rd.get_service("urn:schemas-upnp-org:service:ContentDirectory:1")
+directory.connect("action-invoked::Browse", browse_action)
 
 print "Awaiting commands..."
 GObject.MainLoop().run()
