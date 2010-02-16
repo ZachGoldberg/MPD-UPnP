@@ -2,12 +2,15 @@ from gi.repository import GUPnP, GUPnPAV, GObject, GLib
 from library import MPDLibrary
 from mpdobjects.playlist import MPDPlaylist
 from mpdobjects.song import MPDSong
-import mpd
+import mpd, os
 
 CON_ID = None
 MPDCLIENT = None
 LIBRARY = None
 GObject.threads_init()
+HOST = 'localhost'
+PORT = '6600'
+MUSIC_PATH = "/mnt/nixsys/Music/all"
 
 def setup_server():
 
@@ -26,9 +29,7 @@ def setup_server():
     return rd
 
 def setup_mpd():
-    global CON_ID, MPDCLIENT, LIBRARY
-    HOST = 'localhost'
-    PORT = '6600'
+    global CON_ID, MPDCLIENT, LIBRARY, HOST, PORT
     CON_ID = {'host':HOST, 'port':PORT}
 
     MPDCLIENT = mpd.MPDClient()
@@ -55,12 +56,11 @@ def mpd_func_generator(function_name, args=None):
      MPDCLIENT.connect(**CON_ID)
      getattr(MPDCLIENT, function_name.lower())(*args)
      MPDCLIENT.disconnect()
-     getattr(action, "return")()     
+     getattr(action, "return")()
      
   return wrapper
 
-def set_mpd_uri(service, action):
-    uri = action.get_value_type("CurrentURI", GObject.TYPE_STRING)
+def set_mpd_uri(service, action, uri):
     itemid = int(uri.replace("mpd://", ""))
     
     song = LIBRARY.get_by_id(itemid)
@@ -87,6 +87,44 @@ def set_mpd_uri(service, action):
     MPDCLIENT.disconnect()
     getattr(action, "return")()
 
+
+def set_http_uri(service, action, uri):
+    """
+    This is a bit tricker.  We need to download the file from the local network
+    (hopefully its quick), add the file to MPD (the file has to be 100% downloaded first)
+    then add the file to the playlist and seek to it.
+
+    1) Download file
+    2) Add file to DB
+    3) Load file to local library
+    4) Generate an MPD uri and then call set_mpd_uri
+    """
+    path = uri.replace("http:/", "")
+    import pdb
+    pdb.set_trace()
+    filename = os.path.basename(path)
+    os.system("wget %s -O %s/%s" % (uri, MUSIC_PATH, filename))
+    MPDCLIENT.connect(**CON_ID)
+    MPDCLIENT.update(filename)
+    
+    songdata = MPDCLIENT.find('file', filename)
+    if not songdata:
+        action.return_error(0, "Couldn't add file to MPD database")
+        return
+    
+    songdata = songdata[0]
+    song_id = LIBRARY.register_song(LIBRARY.song_from_dict(songdata))
+
+    MPDCLIENT.disconnect()
+    set_mpd_uri(service, action, "mpd://%s" % song_id)
+    
+def handle_uri_change(service, action):
+    uri = action.get_value_type("CurrentURI", GObject.TYPE_STRING)
+    if "mpd://" in uri:
+        return set_mpd_uri(service, action, uri)
+    elif "http://" in uri:
+        return set_http_uri(service, action, uri)
+    
 def browse_action(service, action):
     global LIBRARY
     itemid = action.get_value_type('ObjectID', GObject.TYPE_INT)
@@ -109,15 +147,13 @@ def browse_action(service, action):
     getattr(action, "return")()
 
 
-
-
 service = rd.get_service("urn:schemas-upnp-org:service:AVTransport:1")
 service.connect("action-invoked::Play", mpd_func_generator("Play"))
 service.connect("action-invoked::Pause", mpd_func_generator("Pause"))
 service.connect("action-invoked::Stop", mpd_func_generator("Stop"))
 service.connect("action-invoked::Next", mpd_func_generator("Next"))
 service.connect("action-invoked::Previous", mpd_func_generator("Previous"))
-service.connect("action-invoked::SetAVTransportURI", set_mpd_uri)
+service.connect("action-invoked::SetAVTransportURI", handle_uri_change)
 
 directory = rd.get_service("urn:schemas-upnp-org:service:ContentDirectory:1")
 directory.connect("action-invoked::Browse", browse_action)

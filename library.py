@@ -20,6 +20,11 @@ class MPDLibrary(object):
     def disconnect(self):
         self.client.disconnect()
 
+    def song_from_dict(self, song):
+        return  MPDSong(song['file'], song.get('artist', 'Unknown'),
+                        song.get('album', 'Unknown'), song.get('title', 'Unknown')
+                        )
+
     def refresh(self):
         self.connect()
 
@@ -32,10 +37,7 @@ class MPDLibrary(object):
             mpdsongs = []
             for song in songs:
                 if not song['file'] in self.songs_by_file:
-                    self.songs_by_file[song['file']] =  MPDSong(song['file'], song.get('artist', 'Unknown'),
-                                                                song.get('album', 'Unknown'), song.get('title', 'Unknown')
-                                                                )
-                                        
+                    self.songs_by_file[song['file']] = self.song_from_dict(song)                                        
                     self.register_song(self.songs_by_file[song['file']])
                     
                 mpdsongs.append(self.songs_by_file[song['file']])
@@ -49,8 +51,7 @@ class MPDLibrary(object):
         curmpdsongs = []
         for song in cursongs:
             if not song['file'] in self.songs_by_file:
-                self.songs_by_file[song['file']] =  MPDSong(song['file'], song.get('artist', 'Unknown'),
-                                                            song.get('album', 'Unknown'), song.get('title', 'Unknown'))
+                self.songs_by_file[song['file']] = self.song_from_dict(song)
                 self.register_song(self.songs_by_file[song['file']])
             curmpdsongs.append(self.songs_by_file[song['file']])
         
@@ -70,10 +71,11 @@ class MPDLibrary(object):
         obj.set_id(self.next_id())
         self.items_by_id[obj.get_id()] = obj
         list.append(obj)
+        return obj.get_id()
         
     def register_playlist(self, playlist):
-        self.register_item(playlist, self.playlists)
+        return self.register_item(playlist, self.playlists)
         
     def register_song(self, song):
-        self.register_item(song, self.songs)
+        return self.register_item(song, self.songs)
         
