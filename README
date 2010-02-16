@@ -1,1 +1,11 @@
 A UPnP MediaServer/MediaRenderer frontend to MPD via PyGUPnP
+
+Features in progress:
+
+1) MPD as a Media Renderer of content that MPD already knows about
+2) MPD as a Media Server of content MPD already knows about that only MPD can consume
+3) MPD as a Media Renderer of arbitrary UPnP-exposed audio content
+4) MPD as a Media Server of its own data to other peers.
+
+
+Blog: http://www.zachgoldberg.com
