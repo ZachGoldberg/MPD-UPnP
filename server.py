@@ -1,23 +1,24 @@
 from gi.repository import GUPnP, GUPnPAV, GObject, GLib
+from library import MPDLibrary
+from mpdobjects.playlist import MPDPlaylist
+from mpdobjects.song import MPDSong
 import mpd
 
 CON_ID = None
 MPDCLIENT = None
-
+LIBRARY = None
 GObject.threads_init()
-
-PLAYLISTS = []
 
 def setup_server():
 
     ctx = GUPnP.Context(interface="eth0")
 
-    ctx.host_path("device.xml", "/device.xml")
-    ctx.host_path("AVTransport2.xml", "/AVTransport2.xml")
-    ctx.host_path("ContentDirectory.xml", "/ContentDirectory.xml")
+    ctx.host_path("xml/device.xml", "/device.xml")
+    ctx.host_path("xml/AVTransport2.xml", "/AVTransport2.xml")
+    ctx.host_path("xml/ContentDirectory.xml", "/ContentDirectory.xml")
 
     desc = "device.xml"
-    desc_loc = "./"
+    desc_loc = "./xml/"
 
     rd = GUPnP.RootDevice.new(ctx, desc, desc_loc)
     rd.set_available(True)
@@ -25,19 +26,16 @@ def setup_server():
     return rd
 
 def setup_mpd():
-    global CON_ID, MPDCLIENT, PLAYLISTS
+    global CON_ID, MPDCLIENT, LIBRARY
     HOST = 'localhost'
     PORT = '6600'
     CON_ID = {'host':HOST, 'port':PORT}
 
     MPDCLIENT = mpd.MPDClient()
-    MPDCLIENT.connect(**CON_ID)
-    
-    print "Downloading MPD Playlists / Library"
-    PLAYLISTS = MPDCLIENT.listplaylists()
-    
-    MPDCLIENT.disconnect()
 
+    LIBRARY = MPDLibrary(MPDCLIENT, CON_ID)
+    LIBRARY.refresh()
+    
     print "Scheduling MPD Database refresh every 60 seconds..."
     
 
@@ -57,30 +55,52 @@ def mpd_func_generator(function_name, args=None):
      MPDCLIENT.connect(**CON_ID)
      getattr(MPDCLIENT, function_name.lower())(*args)
      MPDCLIENT.disconnect()
-     getattr(action, "return")()
+     getattr(action, "return")()     
      
-
   return wrapper
 
 def set_mpd_uri(service, action):
-    print action.get_value_type("CurrentURI", GObject.TYPE_STRING)
-    import pdb
-    pdb.set_trace()
+    uri = action.get_value_type("CurrentURI", GObject.TYPE_STRING)
+    itemid = int(uri.replace("mpd://", ""))
+    
+    song = LIBRARY.get_by_id(itemid)
 
+    if not isinstance(song, MPDSong):
+        action.return_error()
+        return
+    
+    MPDCLIENT.connect(**CON_ID)
+    songdata = MPDCLIENT.playlistfind('file', song.file)
+    
+    if songdata:        
+        # If the song is in the current playlist move to it and play it
+        MPDCLIENT.seek(songdata[0]['pos'], 0)
+    else:
+        # Else add it to the playlist then play it
+        MPDCLIENT.add(song.file)
+        songdata = MPDCLIENT.playlistfind('file', song.file)
+        if not songdata:
+            action.return_error()
+            return
+        MPDCLIENT.seek(songdata[0]['pos'], 0)
+
+    MPDCLIENT.disconnect()
+    getattr(action, "return")()
 
 def browse_action(service, action):
-    w = GUPnPAV.GUPnPDIDLLiteWriter.new("English")
-
-    container = w.add_container()
-    container.set_title("All Songs")
-
-    container = w.add_container()
-    container.set_title("Current Playlist")
+    global LIBRARY
+    itemid = action.get_value_type('ObjectID', GObject.TYPE_INT)
     
-    for p in PLAYLISTS:
-        container = w.add_container()
-        container.set_title(p["playlist"])
-     
+    w = GUPnPAV.GUPnPDIDLLiteWriter.new("English")
+    if itemid == 0:        
+        for playlist in LIBRARY.playlists:
+            playlist.writeself(w)
+    else:
+        obj = LIBRARY.get_by_id(itemid)
+        if not isinstance(obj, MPDPlaylist):
+            action.return_error()
+            return
+        obj.writeall(w)
     
     action.set_value("Result", w.get_string())
     action.set_value("NumberReturned", 1)

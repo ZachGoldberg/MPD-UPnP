@@ -1,0 +1,19 @@
+<root xmlns="urn:schemas-upnp-org:device-1-0" xmlns:dlna="urn:schemas-dlna-org:device-1-0">
+  <specVersion>
+    <major>2</major>
+    <minor>0</minor>
+  </specVersion>
+  <device>
+    <deviceType>urn:schemas-upnp-org:device:MediaRenderer:2</deviceType>
+    <friendlyName></friendlyName>
+    <manufacturer>Rygel Developers</manufacturer>
+    <manufacturerURL>http://live.gnome.org/Rygel</manufacturerURL>
+    <modelName>Rygel</modelName>
+    <modelNumber>0.1</modelNumber>
+    <modelDescription></modelDescription>
+    <modelURL>http://live.gnome.org/Rygel</modelURL>
+    <UDN></UDN>
+    <serviceList>
+    </serviceList>
+  </device>
+</root>
