@@ -2,7 +2,7 @@ from gi.repository import GUPnP, GUPnPAV, GObject, GLib
 from library import MPDLibrary
 from mpdobjects.playlist import MPDPlaylist
 from mpdobjects.song import MPDSong
-import mpd, os
+import mpd, os, re
 
 CON_ID = None
 MPDCLIENT = None
@@ -11,14 +11,19 @@ GObject.threads_init()
 HOST = 'localhost'
 PORT = '6600'
 MUSIC_PATH = "/mnt/nixsys/Music/all"
+CONTEXT = None
+
 
 def setup_server():
-
+    global CONTEXT
+    
     ctx = GUPnP.Context(interface="eth0")
 
-    ctx.host_path("xml/device.xml", "/device.xml")
-    ctx.host_path("xml/AVTransport2.xml", "/AVTransport2.xml")
-    ctx.host_path("xml/ContentDirectory.xml", "/ContentDirectory.xml")
+    ctx.host_path("xml/device.xml", "device.xml")
+    ctx.host_path("xml/AVTransport2.xml", "AVTransport2.xml")
+    ctx.host_path("xml/ContentDirectory.xml", "ContentDirectory.xml")
+
+    ctx.host_path("/mnt/nixsys/Music/all/Seether/Seether featuring Amy Lee - Broken.mp3", "/file/test.mp3")
 
     desc = "device.xml"
     desc_loc = "./xml/"
@@ -26,6 +31,7 @@ def setup_server():
     rd = GUPnP.RootDevice.new(ctx, desc, desc_loc)
     rd.set_available(True)
 
+    CONTEXT = ctx
     return rd
 
 def setup_mpd():
@@ -34,7 +40,7 @@ def setup_mpd():
 
     MPDCLIENT = mpd.MPDClient()
 
-    LIBRARY = MPDLibrary(MPDCLIENT, CON_ID)
+    LIBRARY = MPDLibrary(MPDCLIENT, CON_ID, CONTEXT, MUSIC_PATH)
     LIBRARY.refresh()
     
     print "Scheduling MPD Database refresh every 60 seconds..."
@@ -61,7 +67,12 @@ def mpd_func_generator(function_name, args=None):
   return wrapper
 
 def set_mpd_uri(service, action, uri):
-    itemid = int(uri.replace("mpd://", ""))
+    print "Playing %s" % uri
+    match = re.search("/file\/(.*)$", uri)
+    if not match:
+        action.return_error(0, "Invalid URI")
+        
+    itemid = int(match.groups()[0])
     
     song = LIBRARY.get_by_id(itemid)
 
@@ -100,8 +111,6 @@ def set_http_uri(service, action, uri):
     4) Generate an MPD uri and then call set_mpd_uri
     """
     path = uri.replace("http:/", "")
-    import pdb
-    pdb.set_trace()
     filename = os.path.basename(path)
     os.system("wget %s -O %s/%s" % (uri, MUSIC_PATH, filename))
     MPDCLIENT.connect(**CON_ID)
@@ -112,17 +121,19 @@ def set_http_uri(service, action, uri):
         action.return_error(0, "Couldn't add file to MPD database")
         return
     
-    songdata = songdata[0]
-    song_id = LIBRARY.register_song(LIBRARY.song_from_dict(songdata))
+    song_id = LIBRARY.register_song(LIBRARY.song_from_dict(songdata[0]))
 
     MPDCLIENT.disconnect()
-    set_mpd_uri(service, action, "mpd://%s" % song_id)
+    set_mpd_uri(service, action, "http://%s:%s/file/%s" % (CONTEXT.get_host_ip(),
+                                                           CONTEXT.get_port(),
+                                                           song_id)
+                )
     
 def handle_uri_change(service, action):
     uri = action.get_value_type("CurrentURI", GObject.TYPE_STRING)
-    if "mpd://" in uri:
+    if CONTEXT.get_host_ip() in uri:
         return set_mpd_uri(service, action, uri)
-    elif "http://" in uri:
+    else:
         return set_http_uri(service, action, uri)
     
 def browse_action(service, action):
@@ -160,4 +171,3 @@ directory.connect("action-invoked::Browse", browse_action)
 
 print "Awaiting commands..."
 GObject.MainLoop().run()
-

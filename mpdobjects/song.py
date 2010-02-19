@@ -6,6 +6,10 @@ class MPDSong(MPDObject):
         self.artist = artist
         self.album = album
         self.title = title
+        self.resource = ""
+
+    def set_resource(self, resource):
+        self.resource = resource
         
     def writeself(self, writer):
         item = writer.add_item()
@@ -14,5 +18,6 @@ class MPDSong(MPDObject):
         item.set_album(self.album)        
         item.set_id(str(self.get_id()))
 
-        res = item.add_resource()
-        res.set_uri("mpd://%s" % self.get_id())
+        if self.resource:
+            res = item.add_resource()
+            res.set_uri(self.resource)

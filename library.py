@@ -2,9 +2,11 @@ from mpdobjects.playlist import MPDPlaylist
 from mpdobjects.song import MPDSong
 
 class MPDLibrary(object):
-    def __init__(self, client, credentials):
+    def __init__(self, client, credentials, server, music_path):
         self.client = client
         self.creds = credentials
+        self.webserver = server
+        self.music_path = music_path
 
     def clear(self):
         self.playlists = []
@@ -77,5 +79,15 @@ class MPDLibrary(object):
         return self.register_item(playlist, self.playlists)
         
     def register_song(self, song):
-        return self.register_item(song, self.songs)
+        self.register_item(song, self.songs)
+
+        local_file = self.music_path + "/" + song.file
+        remote_loc = "/file/%s" % song.id
+        
+        self.webserver.host_path(local_file, remote_loc)
+        
+        song.set_resource("http://%s:%s/file/%s" % (self.webserver.get_host_ip(),
+                                                    self.webserver.get_port(),
+                                                    song.id))
+        return song.id
         
