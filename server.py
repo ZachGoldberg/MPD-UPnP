@@ -131,7 +131,7 @@ def set_http_uri(service, action, uri):
     
 def handle_uri_change(service, action):
     uri = action.get_value_type("CurrentURI", GObject.TYPE_STRING)
-    if CONTEXT.get_host_ip() in uri:
+    if CONTEXT.get_host_ip() in uri and str(CONTEXT.get_port()) in uri:
         return set_mpd_uri(service, action, uri)
     else:
         return set_http_uri(service, action, uri)
