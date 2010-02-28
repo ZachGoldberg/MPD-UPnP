@@ -2,7 +2,7 @@ from gi.repository import GUPnP, GUPnPAV, GObject, GLib
 from library import MPDLibrary
 from mpdobjects.playlist import MPDPlaylist
 from mpdobjects.song import MPDSong
-import mpd, os, re, atexit, sys
+import mpd, os, re, atexit, sys, time
 
 CON_ID = None
 MPDCLIENT = None
@@ -145,6 +145,11 @@ def handle_uri_change(service, action):
 def browse_action(service, action):
     global LIBRARY
     itemid = action.get_value_type('ObjectID', GObject.TYPE_INT)
+
+
+    while not LIBRARY.ever_updated:
+        print "Library never updated.  Waiting for update to finish..."
+        time.sleep(1)
     
     w = GUPnPAV.GUPnPDIDLLiteWriter.new("English")
     if itemid == 0:        

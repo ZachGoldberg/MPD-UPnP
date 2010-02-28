@@ -10,7 +10,9 @@ class MPDLibrary(object):
         self.music_path = music_path
         self.connected = False
         self.num_connects = 0
-        
+        self.ever_updated = False
+        self.clear()
+
         self.updater = threading.Thread(target=self.update_library,
                                         name="Library Updater")
         
@@ -107,7 +109,8 @@ class MPDLibrary(object):
         self.register_playlist(MPDPlaylist('Current Playlist', curmpdsongs))
         self.register_playlist(MPDPlaylist('All Songs', self.songs))
         self.playlists.reverse()
-
+        self.ever_updated = True
+        
         print "\nDone"
 
     def get_by_id(self, id):
