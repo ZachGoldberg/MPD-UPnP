@@ -24,7 +24,8 @@ class MPDLibrary(object):
 
     def song_from_dict(self, song):
         return  MPDSong(song['file'], song.get('artist', 'Unknown'),
-                        song.get('album', 'Unknown'), song.get('title', 'Unknown')
+                        song.get('album', 'Unknown'),
+                        song.get('title', 'Unknown')
                         )
 
     def refresh(self):
@@ -39,7 +40,7 @@ class MPDLibrary(object):
             mpdsongs = []
             for song in songs:
                 if not song['file'] in self.songs_by_file:
-                    self.songs_by_file[song['file']] = self.song_from_dict(song)                                        
+                    self.songs_by_file[song['file']] = self.song_from_dict(song)
                     self.register_song(self.songs_by_file[song['file']])
                     
                 mpdsongs.append(self.songs_by_file[song['file']])
@@ -86,8 +87,9 @@ class MPDLibrary(object):
         
         self.webserver.host_path(local_file, remote_loc)
         
-        song.set_resource("http://%s:%s/file/%s" % (self.webserver.get_host_ip(),
-                                                    self.webserver.get_port(),
-                                                    song.id))
+        song.set_resource("http://%s:%s/file/%s" % (
+            self.webserver.get_host_ip(),
+            self.webserver.get_port(),
+            song.id))
         return song.id
         
