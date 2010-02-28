@@ -1,5 +1,6 @@
 from mpdobjects.playlist import MPDPlaylist
 from mpdobjects.song import MPDSong
+import threading, time, sys
 
 class MPDLibrary(object):
     def __init__(self, client, credentials, server, music_path):
@@ -8,6 +9,9 @@ class MPDLibrary(object):
         self.webserver = server
         self.music_path = music_path
 
+        self.updater = threading.Thread(target=self.update_library,
+                                        name="Library Updater")
+        
     def clear(self):
         self.playlists = []
         self.songs = []
@@ -18,9 +22,11 @@ class MPDLibrary(object):
 
     def connect(self):
         self.client.connect(**self.creds)
+
         
     def disconnect(self):
         self.client.disconnect()
+
 
     def song_from_dict(self, song):
         return  MPDSong(song['file'], song.get('artist', 'Unknown'),
@@ -28,14 +34,47 @@ class MPDLibrary(object):
                         song.get('title', 'Unknown')
                         )
 
+
+    def start_updating(self):
+        self.stop_running = False
+        if not self.updater.isAlive():
+            self.updater.start()
+
+    def stop_updating(self):
+        self.stop_running = True
+
+    def update_library(self):
+        time.sleep(1)
+        while True:           
+            self.refresh()
+            
+            time_slept = 0
+            while time_slept < (5 * 60):
+                if self.stop_running:
+                    return
+                
+                time.sleep(1)
+                time_slept += 1
+
     def refresh(self):
         self.connect()
 
         self.clear()
     
-        print "Downloading MPD Playlists / Library"
-        for p in self.client.listplaylists():
-            print "Loading %s" % p['playlist']
+        sys.stdout.write("Downloading MPD Playlists / Library... ")
+        sys.stdout.flush()
+        playlists = self.client.listplaylists()
+        pos = 1
+        last_length = 0
+        for p in playlists:
+            # Silly stuff to make terminal output pretty                
+            output = "%s/%s" % (pos, len(playlists))
+            sys.stdout.write("\b" * last_length + output)
+            sys.stdout.flush()
+            last_length = len(output)
+            pos += 1
+            
+            
             songs = self.client.listplaylistinfo(p['playlist'])
             mpdsongs = []
             for song in songs:
@@ -61,6 +100,8 @@ class MPDLibrary(object):
         self.register_playlist(MPDPlaylist('Current Playlist', curmpdsongs))
         self.register_playlist(MPDPlaylist('All Songs', self.songs))
         self.playlists.reverse()
+
+        print "\nDone"
 
     def get_by_id(self, id):
         return self.items_by_id.get(id, None)

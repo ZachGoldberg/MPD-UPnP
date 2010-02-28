@@ -2,7 +2,7 @@ from gi.repository import GUPnP, GUPnPAV, GObject, GLib
 from library import MPDLibrary
 from mpdobjects.playlist import MPDPlaylist
 from mpdobjects.song import MPDSong
-import mpd, os, re
+import mpd, os, re, atexit, sys
 
 CON_ID = None
 MPDCLIENT = None
@@ -13,6 +13,11 @@ PORT = '6600'
 MUSIC_PATH = "/mnt/nixsys/Music/all"
 CONTEXT = None
 
+
+def kill_library():
+    LIBRARY.stop_updating()
+    
+atexit.register(kill_library)
 
 def setup_server():
     global CONTEXT
@@ -41,7 +46,7 @@ def setup_mpd():
     MPDCLIENT = mpd.MPDClient()
 
     LIBRARY = MPDLibrary(MPDCLIENT, CON_ID, CONTEXT, MUSIC_PATH)
-    LIBRARY.refresh()
+    LIBRARY.start_updating()
     
     print "Scheduling MPD Database refresh every 60 seconds..."
     
@@ -170,4 +175,8 @@ directory = rd.get_service("urn:schemas-upnp-org:service:ContentDirectory:1")
 directory.connect("action-invoked::Browse", browse_action)
 
 print "Awaiting commands..."
-GObject.MainLoop().run()
+try:
+    GObject.MainLoop().run()
+except KeyboardInterrupt:    
+    print "Done"
+    sys.exit(0)
