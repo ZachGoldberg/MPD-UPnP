@@ -2,6 +2,8 @@ from gi.repository import GUPnP, GUPnPAV, GObject, GLib
 from library import MPDLibrary
 from mpdobjects.playlist import MPDPlaylist
 from mpdobjects.song import MPDSong
+from client import MPDClient
+
 import mpd, os, re, atexit, sys, time
 
 CON_ID = None
@@ -43,7 +45,7 @@ def setup_mpd():
     global CON_ID, MPDCLIENT, LIBRARY, HOST, PORT
     CON_ID = {'host':HOST, 'port':PORT}
 
-    MPDCLIENT = mpd.MPDClient()
+    MPDCLIENT = MPDClient(CON_ID)
 
     LIBRARY = MPDLibrary(MPDCLIENT, CON_ID, CONTEXT, MUSIC_PATH)
     LIBRARY.start_updating()

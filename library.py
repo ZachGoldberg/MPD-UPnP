@@ -23,19 +23,11 @@ class MPDLibrary(object):
         self.id_inc = 0
         self.items_by_id = {}
 
-
     def connect(self):
-        self.num_connects += 1
-        if not self.connected:
-            self.client.connect(**self.creds)
-            self.connected = True
-
+        self.client.connect()
+        
     def disconnect(self):
-        self.num_connects -= 1
-        if self.connected and self.num_connects == 0:
-            self.client.disconnect()
-            self.connected = False
-
+        self.client.disconnect()
 
     def song_from_dict(self, song):
         return  MPDSong(song['file'], song.get('artist', 'Unknown'),
@@ -67,9 +59,8 @@ class MPDLibrary(object):
 
     def refresh(self):
         self.connect()
-
         self.clear()
-    
+
         sys.stdout.write("Downloading MPD Playlists / Library... ")
         sys.stdout.flush()
         playlists = self.client.listplaylists()
