@@ -8,7 +8,9 @@ class MPDLibrary(object):
         self.creds = credentials
         self.webserver = server
         self.music_path = music_path
-
+        self.connected = False
+        self.num_connects = 0
+        
         self.updater = threading.Thread(target=self.update_library,
                                         name="Library Updater")
         
@@ -21,11 +23,16 @@ class MPDLibrary(object):
 
 
     def connect(self):
-        self.client.connect(**self.creds)
+        self.num_connects += 1
+        if not self.connected:
+            self.client.connect(**self.creds)
+            self.connected = True
 
-        
     def disconnect(self):
-        self.client.disconnect()
+        self.num_connects -= 1
+        if self.connected and self.num_connects == 0:
+            self.client.disconnect()
+            self.connected = False
 
 
     def song_from_dict(self, song):

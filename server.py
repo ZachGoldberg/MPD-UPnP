@@ -64,9 +64,9 @@ def mpd_func_generator(function_name, args=None):
 
   def wrapper(service, action):
      print function_name
-     MPDCLIENT.connect(**CON_ID)
+     LIBRARY.connect()
      getattr(MPDCLIENT, function_name.lower())(*args)
-     MPDCLIENT.disconnect()
+     LIBRARY.disconnect()
      getattr(action, "return")()
      
   return wrapper
@@ -85,7 +85,7 @@ def set_mpd_uri(service, action, uri):
         action.return_error()
         return
     
-    MPDCLIENT.connect(**CON_ID)
+    LIBRARY.connect()
     songdata = MPDCLIENT.playlistfind('file', song.file)
     
     if songdata:        
@@ -100,7 +100,7 @@ def set_mpd_uri(service, action, uri):
             return
         MPDCLIENT.seek(songdata[0]['pos'], 0)
 
-    MPDCLIENT.disconnect()
+    LIBRARY.disconnect()
     getattr(action, "return")()
 
 
@@ -118,7 +118,8 @@ def set_http_uri(service, action, uri):
     path = uri.replace("http:/", "")
     filename = os.path.basename(path)
     os.system("wget %s -O %s/%s" % (uri, MUSIC_PATH, filename))
-    MPDCLIENT.connect(**CON_ID)
+    
+    LIBRARY.connect()
     MPDCLIENT.update(filename)
     
     songdata = MPDCLIENT.find('file', filename)
@@ -128,7 +129,7 @@ def set_http_uri(service, action, uri):
     
     song_id = LIBRARY.register_song(LIBRARY.song_from_dict(songdata[0]))
 
-    MPDCLIENT.disconnect()
+    LIBRARY.disconnect()
     set_mpd_uri(service, action, "http://%s:%s/file/%s" % (CONTEXT.get_host_ip(),
                                                            CONTEXT.get_port(),
                                                            song_id)
