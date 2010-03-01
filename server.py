@@ -66,11 +66,11 @@ def mpd_func_generator(function_name, args=None):
 
   def wrapper(service, action):
      print function_name
-     LIBRARY.connect()
+     MPDCLIENT.connect()
      getattr(MPDCLIENT, function_name.lower())(*args)
-     LIBRARY.disconnect()
+     MPDCLIENT.disconnect()
      getattr(action, "return")()
-     
+
   return wrapper
 
 def set_mpd_uri(service, action, uri):
@@ -87,7 +87,7 @@ def set_mpd_uri(service, action, uri):
         action.return_error()
         return
     
-    LIBRARY.connect()
+    MPDCLIENT.connect()
     songdata = MPDCLIENT.playlistfind('file', song.file)
     
     if songdata:        
@@ -102,7 +102,7 @@ def set_mpd_uri(service, action, uri):
             return
         MPDCLIENT.seek(songdata[0]['pos'], 0)
 
-    LIBRARY.disconnect()
+    MPDCLIENT.disconnect()
     getattr(action, "return")()
 
 
@@ -143,6 +143,24 @@ def handle_uri_change(service, action):
         return set_mpd_uri(service, action, uri)
     else:
         return set_http_uri(service, action, uri)
+
+def handle_state_request(service, action):
+    print "Status"
+    
+    MPDCLIENT.connect()
+    status = MPDCLIENT.status()
+    MPDCLIENT.disconnect()
+
+    if status['state'] == "pause":
+        state = "PAUSED_PLAYBACK"
+    elif status['state'] == "play":
+        state = "PLAYING"
+    
+    action.set_value("CurrentTransportState", state)
+    action.set_value("CurrentTransportStatus", "OK")
+    action.set_value("CurrentSpeed", "1")
+    
+    getattr(action, "return")()
     
 def browse_action(service, action):
     global LIBRARY
@@ -178,6 +196,7 @@ service.connect("action-invoked::Stop", mpd_func_generator("Stop"))
 service.connect("action-invoked::Next", mpd_func_generator("Next"))
 service.connect("action-invoked::Previous", mpd_func_generator("Previous"))
 service.connect("action-invoked::SetAVTransportURI", handle_uri_change)
+service.connect("action-invoked::GetTransportInfo", handle_state_request)
 
 directory = rd.get_service("urn:schemas-upnp-org:service:ContentDirectory:1")
 directory.connect("action-invoked::Browse", browse_action)
