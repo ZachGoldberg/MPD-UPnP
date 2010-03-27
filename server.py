@@ -136,17 +136,56 @@ def set_http_uri(service, action, uri):
     song_id = LIBRARY.register_song(LIBRARY.song_from_dict(songdata[0]))
 
     LIBRARY.disconnect()
-    set_mpd_uri(service, action, "http://%s:%s/file/%s" % (CONTEXT.get_host_ip(),
-                                                           CONTEXT.get_port(),
-                                                           song_id)
+    set_mpd_uri(service, action, "http://%s:%s/file/%s" % (
+        CONTEXT.get_host_ip(),
+        CONTEXT.get_port(),
+        song_id)
                 )
     
 def handle_uri_change(service, action):
     uri = action.get_value_type("CurrentURI", GObject.TYPE_STRING)
+    if not uri:
+      return None
+
     if CONTEXT.get_host_ip() in uri and str(CONTEXT.get_port()) in uri:
         return set_mpd_uri(service, action, uri)
     else:
         return set_http_uri(service, action, uri)
+
+
+def int_to_time(timevalue):
+    timevalue = int(timevalue)
+    return "%.2d:%.2d:%.2d" % (int(timevalue / 3600),
+                               int(timevalue / 60),
+                               timevalue % 60)
+        
+def handle_position_request(service, action):
+    print "Position"
+
+    MPDCLIENT.connect()
+    status = MPDCLIENT.status()
+    MPDCLIENT.disconnect()    
+
+    MPDCLIENT.connect()
+    songinfo = MPDCLIENT.playlistid(status['songid'])
+    MPDCLIENT.disconnect()
+    
+    w = GUPnPAV.GUPnPDIDLLiteWriter.new("English")
+    song = LIBRARY.songs_by_file[songinfo[0]['file']]
+    song.writeself(w)
+    
+    action.set_value("Track", str(song.id))
+    action.set_value("TrackMetaData", w.get_string())
+    action.set_value("TrackURI", getattr(song, "url", ""))
+
+    action.set_value("TrackDuration",
+                     int_to_time(status.get("time", "0:0").split(":")[1]))
+    
+    curtime = int_to_time(status.get("time", "0:0").split(":")[0])
+    action.set_value("RelTime", curtime)
+    action.set_value("AbsTime", curtime)
+    
+    getattr(action, "return")()
 
 def handle_state_request(service, action):
     print "Status"
@@ -201,6 +240,7 @@ service.connect("action-invoked::Next", mpd_func_generator("Next"))
 service.connect("action-invoked::Previous", mpd_func_generator("Previous"))
 service.connect("action-invoked::SetAVTransportURI", handle_uri_change)
 service.connect("action-invoked::GetTransportInfo", handle_state_request)
+service.connect("action-invoked::GetPositionInfo",  handle_position_request)
 
 directory = rd.get_service("urn:schemas-upnp-org:service:ContentDirectory:1")
 directory.connect("action-invoked::Browse", browse_action)

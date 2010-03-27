@@ -7,3 +7,6 @@ class MPDObject(object):
         
     def get_id(self):
         return self.id
+
+    def get_file(self):
+        return getattr(self, "file", None)

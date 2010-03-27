@@ -22,7 +22,7 @@ class MPDLibrary(object):
         self.songs_by_file = {}
         self.id_inc = 0
         self.items_by_id = {}
-
+        self.items_by_file = {}
     def connect(self):
         self.client.connect()
         
@@ -115,6 +115,7 @@ class MPDLibrary(object):
     def register_item(self, obj, list):
         obj.set_id(self.next_id())
         self.items_by_id[obj.get_id()] = obj
+        self.items_by_file[obj.get_file()] = obj
         list.append(obj)
         return obj.get_id()
         
@@ -128,10 +129,12 @@ class MPDLibrary(object):
         remote_loc = "/file/%s" % song.id
         
         self.webserver.host_path(local_file, remote_loc)
-        
-        song.set_resource("http://%s:%s/file/%s" % (
+
+        song.url = "http://%s:%s/file/%s" % (
             self.webserver.get_host_ip(),
             self.webserver.get_port(),
-            song.id))
+            song.id)
+        
+        song.set_resource(song.url)
         return song.id
         
