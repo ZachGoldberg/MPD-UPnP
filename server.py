@@ -119,6 +119,10 @@ def set_http_uri(service, action, uri):
     """
     path = uri.replace("http:/", "")
     filename = os.path.basename(path)
+
+    if not "." in filename:
+        filename += ".mp3" # assume mp3 for now
+    
     os.system("wget %s -O %s/%s" % (uri, MUSIC_PATH, filename))
     
     LIBRARY.connect()

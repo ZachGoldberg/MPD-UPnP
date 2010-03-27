@@ -32,7 +32,14 @@ class MPDClient(object):
         while self.queue[0] != (func, args, kwargs):
             time.sleep(0.1)
                 
-        val = func(*args, **kwargs)
+        try:
+            val = func(*args, **kwargs)
+        except:
+            import traceback
+            traceback.print_exc()
+            self.disconnect()
+            self.connect()
+
         self.queue.remove(self.queue[0])
         return val
 
