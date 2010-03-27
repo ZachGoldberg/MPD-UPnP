@@ -158,23 +158,29 @@ def int_to_time(timevalue):
     return "%.2d:%.2d:%.2d" % (int(timevalue / 3600),
                                int(timevalue / 60),
                                timevalue % 60)
+
+def time_to_int(time):
+    (hour, min, sec) = time.split(":")
+    return (int(hour) * 3600) + (int(min) * 60) + int(sec)
+    
         
 def handle_position_request(service, action):
     print "Position"
 
     MPDCLIENT.connect()
     status = MPDCLIENT.status()
-    MPDCLIENT.disconnect()    
-
-    MPDCLIENT.connect()
     songinfo = MPDCLIENT.playlistid(status['songid'])
     MPDCLIENT.disconnect()
     
-    w = GUPnPAV.GUPnPDIDLLiteWriter.new("English")
-    song = LIBRARY.songs_by_file[songinfo[0]['file']]
-    song.writeself(w)
-    
-    action.set_value("Track", str(song.id))
+    w = GUPnPAV.GUPnPDIDLLiteWriter.new("English")   
+    song = LIBRARY.songs_by_file.get(songinfo[0]['file'], None)
+
+    song_id = "0"
+    if song:
+      song.writeself(w)
+      song_id = str(song.id)
+
+    action.set_value("Track", song_id)
     action.set_value("TrackMetaData", w.get_string())
     action.set_value("TrackURI", getattr(song, "url", ""))
 
@@ -203,6 +209,17 @@ def handle_state_request(service, action):
     action.set_value("CurrentTransportStatus", "OK")
     action.set_value("CurrentSpeed", "1")
     
+    getattr(action, "return")()
+
+
+def handle_seek_request(service, action):
+    seek_time = action.get_value_type('Target', GObject.TYPE_STRING)
+    MPDCLIENT.connect()
+    status = MPDCLIENT.status()
+    print "id: %s" % status["songid"], seek_time
+    MPDCLIENT.seek(status["songid"], time_to_int(seek_time))
+    MPDCLIENT.disconnect()
+
     getattr(action, "return")()
     
 def browse_action(service, action):
@@ -241,6 +258,7 @@ service.connect("action-invoked::Previous", mpd_func_generator("Previous"))
 service.connect("action-invoked::SetAVTransportURI", handle_uri_change)
 service.connect("action-invoked::GetTransportInfo", handle_state_request)
 service.connect("action-invoked::GetPositionInfo",  handle_position_request)
+service.connect("action-invoked::Seek", handle_seek_request)
 
 directory = rd.get_service("urn:schemas-upnp-org:service:ContentDirectory:1")
 directory.connect("action-invoked::Browse", browse_action)
