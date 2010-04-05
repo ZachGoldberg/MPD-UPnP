@@ -1,3 +1,5 @@
+import pygtk
+pygtk.require('2.0')
 from gi.repository import GUPnP, GUPnPAV, GObject, GLib
 from library import MPDLibrary
 from mpdobjects.playlist import MPDPlaylist
@@ -200,11 +202,13 @@ def handle_state_request(service, action):
     status = MPDCLIENT.status()
     MPDCLIENT.disconnect()
 
-    if status['state'] == "pause":
+    if status and status['state'] == "pause":
         state = "PAUSED_PLAYBACK"
-    elif status['state'] == "play":
+    elif status and status['state'] == "play":
         state = "PLAYING"
-    
+    else:
+        state = "STOPPED"
+
     action.set_value("CurrentTransportState", state)
     action.set_value("CurrentTransportStatus", "OK")
     action.set_value("CurrentSpeed", "1")

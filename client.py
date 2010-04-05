@@ -12,14 +12,13 @@ class MPDClient(object):
     def connect(self):
         self.num_connects += 1
         if not self.connected:
-            self.client.connect(**self.creds)
+            try:
+              self.client.connect(**self.creds)
+            except:
+	      return None
             self.connected = True
 
-        try:
-            self.run_cmd(self.client.status, [], {})
-        except:
-            self.disconnect()
-            return self.connect()
+        self.run_cmd(self.client.status, [], {})
 
     def disconnect(self):
         self.num_connects -= 1
@@ -31,7 +30,8 @@ class MPDClient(object):
         self.queue.append((func, args, kwargs))
         while self.queue[0] != (func, args, kwargs):
             time.sleep(0.1)
-                
+
+        val = None                
         try:
             val = func(*args, **kwargs)
         except:

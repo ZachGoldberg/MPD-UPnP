@@ -63,7 +63,7 @@ class MPDLibrary(object):
 
         sys.stdout.write("Downloading MPD Playlists / Library... ")
         sys.stdout.flush()
-        playlists = self.client.listplaylists()
+        playlists = self.client.listplaylists() or []
         pos = 1
         last_length = 0
         for p in playlists:
@@ -87,7 +87,7 @@ class MPDLibrary(object):
             playlist = MPDPlaylist(p['playlist'], mpdsongs)
             self.register_playlist(playlist)
 
-        cursongs = self.client.playlistinfo()
+        cursongs = self.client.playlistinfo() or []
         self.disconnect()
 
         curmpdsongs = []
