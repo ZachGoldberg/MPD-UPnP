@@ -84,6 +84,7 @@ if __name__ == '__main__':
     
     control = rd.get_service("urn:schemas-upnp-org:service:RenderingControl:1")
     control.connect("action-invoked::GetVolume", get_volume)
+    control.connect("action-invoked::SetVolume", set_volume)
 
     
     atexit.register(kill_library)
