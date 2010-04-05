@@ -2,6 +2,11 @@ from mpdobjects.playlist import MPDPlaylist
 from mpdobjects.song import MPDSong
 import threading, time, sys
 
+LIBRARY = None
+
+def get_library():
+    return LIBRARY
+
 class MPDLibrary(object):
     def __init__(self, client, credentials, server, music_path):
         self.client = client

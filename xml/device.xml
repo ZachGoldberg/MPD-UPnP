@@ -27,6 +27,13 @@
         <controlURL>/Content/Control</controlURL>
         <eventSubURL>/Content/Event</eventSubURL>
       </service>
+      <service>
+        <serviceType>urn:schemas-upnp-org:service:RenderingControl:1</serviceType>
+        <serviceId>urn:upnp-org:serviceId:RenderingControl</serviceId>
+        <SCPDURL>/RenderingControl2.xml</SCPDURL>
+        <controlURL>/RenderingControl/Control</controlURL>
+        <eventSubURL>/RenderingControl/Event</eventSubURL>
+      </service>
     </serviceList>
   </device>
 </root>

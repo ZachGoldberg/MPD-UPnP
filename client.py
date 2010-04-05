@@ -1,5 +1,10 @@
 import mpd, time
 
+MPDCLIENT = None
+
+def get_client():
+    return MPDCLIENT
+
 class MPDClient(object):
 
     def __init__(self, con_id):
