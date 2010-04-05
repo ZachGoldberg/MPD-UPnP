@@ -145,7 +145,7 @@ def set_http_uri(service, action, uri):
                 )
     
 def handle_uri_change(service, action):
-    uri = action.get_value_type("CurrentURI", GObject.TYPE_STRING)
+    uri = action.get_values(["CurrentURI"], [GObject.TYPE_STRING])
     if not uri:
       return None
 
@@ -181,10 +181,9 @@ def handle_position_request(service, action):
     if song:
       song.writeself(w)
       song_id = str(song.id)
-
-    action.set_value("Track", song_id)
-    action.set_value("TrackMetaData", w.get_string())
-    action.set_value("TrackURI", getattr(song, "url", ""))
+    
+    action.set_values(["Track", "TrackMetaData", "TrackURI"],
+                      [song_id, w.get_string(), getattr(song, "url", "")])
 
     action.set_value("TrackDuration",
                      int_to_time(status.get("time", "0:0").split(":")[1]))
@@ -217,7 +216,7 @@ def handle_state_request(service, action):
 
 
 def handle_seek_request(service, action):
-    seek_time = action.get_value_type('Target', GObject.TYPE_STRING)
+    seek_time = action.get_value('Target', GObject.TYPE_STRING)
     MPDCLIENT.connect()
     status = MPDCLIENT.status()
     print "id: %s" % status["songid"], seek_time
@@ -228,7 +227,7 @@ def handle_seek_request(service, action):
     
 def browse_action(service, action):
     global LIBRARY
-    itemid = action.get_value_type('ObjectID', GObject.TYPE_INT)
+    itemid = action.get_value('ObjectID', GObject.TYPE_INT)
 
 
     while not LIBRARY.ever_updated:
