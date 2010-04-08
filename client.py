@@ -39,11 +39,10 @@ class MPDClient(object):
         val = None                
         try:
             val = func(*args, **kwargs)
-        except:
+        except ConnectionError:
             import traceback
             traceback.print_exc()
-            self.disconnect()
-            self.connect()
+	    raise
 
         self.queue.remove(self.queue[0])
         return val

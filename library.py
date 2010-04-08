@@ -107,7 +107,7 @@ class MPDLibrary(object):
         self.playlists.reverse()
         self.ever_updated = True
         
-        print "\nDone"
+        print "\nDone, Updated %s Songs" % len(self.songs)
 
     def get_by_id(self, id):
         return self.items_by_id.get(id, None)
