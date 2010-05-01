@@ -18,9 +18,9 @@ class MPDClient(object):
         self.num_connects += 1
         if not self.connected:
             try:
-              self.client.connect(**self.creds)
+                self.client.connect(**self.creds)
             except:
-	      return None
+                return None
             self.connected = True
 
         self.run_cmd(self.client.status, [], {})
@@ -39,10 +39,10 @@ class MPDClient(object):
         val = None                
         try:
             val = func(*args, **kwargs)
-        except ConnectionError:
+        except mpd.ConnectionError:
             import traceback
             traceback.print_exc()
-	    raise
+            val = None
 
         self.queue.remove(self.queue[0])
         return val
