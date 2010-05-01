@@ -7,7 +7,7 @@ def get_volume(service, action):
     MPDCLIENT.connect()
 
     status = MPDCLIENT.status()
-    action.set_value("ChannelVolume", str(status.get('volume', '0')))
+    action.set_value("CurrentVolume", str(status.get('volume', '0')))
     MPDCLIENT.disconnect()
 
     print "Get Volume %s" % status.get('volume', 0)

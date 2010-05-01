@@ -23,7 +23,7 @@ def kill_library():
 def setup_server():
     global CONTEXT
     
-    ctx = GUPnP.Context(interface="wlan0")
+    ctx = GUPnP.Context(interface="eth0")
 
     ctx.host_path("xml/device.xml", "device.xml")
     ctx.host_path("xml/AVTransport2.xml", "AVTransport2.xml")
