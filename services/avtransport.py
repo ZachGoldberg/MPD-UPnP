@@ -128,6 +128,10 @@ def handle_position_request(service, action):
 
     MPDCLIENT.connect()
     status = MPDCLIENT.status()
+    if not "songid" in status:
+      MPDCLIENT.disconnect()
+      getattr(action, "return")()
+      return
     songinfo = MPDCLIENT.playlistid(status['songid'])
     MPDCLIENT.disconnect()
     
@@ -180,8 +184,8 @@ def handle_seek_request(service, action):
     seek_time = action.get_value('Target', GObject.TYPE_STRING)
     MPDCLIENT.connect()
     status = MPDCLIENT.status()
-    print "id: %s" % status["songid"], seek_time
-    MPDCLIENT.seek(status["songid"], time_to_int(seek_time))
+    print "Seek id: %s, time: %s" % (status["song"], seek_time)
+    MPDCLIENT.seek(status["song"], time_to_int(seek_time))
     MPDCLIENT.disconnect()
 
     getattr(action, "return")()
