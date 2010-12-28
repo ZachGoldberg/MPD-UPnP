@@ -1,4 +1,4 @@
-A UPnP MediaServer/MediaRenderer frontend to MPD via PyGUPnP
+A UPnP MediaServer/MediaRenderer frontend to MPD via PyGObject + Gobject Introspection
 
 Features in progress:
 
@@ -9,3 +9,17 @@ Features in progress:
 
 
 Blog: http://www.zachgoldberg.com
+
+Dependencies:
+* pygobject >=0.26 (preferably newer or HEAD)
+* gobject introspection >=0.6.14 (preferably newer or HEAD)
+* GUPnP >=0.15 with introspection support
+* GUPnP-AV >= 0.6 with introspection support
+
+Setup:
+* Open server.py with a text editor
+  - Edit HOST, PORT, MUSIC_PATH variables to point to the host and port
+    of your running MPD server.  MUSIC_PATH is necessary if you wish to 
+    be able to listen to media from a remote machine on the local MPD server.
+
+* Run MPD-UPnP with "python server.py"
